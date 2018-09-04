@@ -1713,7 +1713,7 @@ moduleWarn :: ModuleName -> WarningTxt -> SDoc
 moduleWarn mod (WarningTxt _ txt)
   = sep [ text "Module" <+> quotes (ppr mod) <> ptext (sLit ":"),
           nest 2 (vcat (map (ppr . sl_fs . unLoc) txt)) ]
-moduleWarn mod (DeprecatedTxt _ txt)
+moduleWarn mod (DeprecatedTxt _ txt _)
   = sep [ text "Module" <+> quotes (ppr mod)
                                 <+> text "is deprecated:",
           nest 2 (vcat (map (ppr . sl_fs . unLoc) txt)) ]

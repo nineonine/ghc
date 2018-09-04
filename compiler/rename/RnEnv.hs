@@ -65,7 +65,8 @@ import DataCon
 import TyCon
 import ErrUtils         ( MsgDoc )
 import PrelNames        ( rOOT_MAIN )
-import BasicTypes       ( pprWarningTxtForMsg, TopLevelFlag(..))
+import BasicTypes       ( pprWarningTxtForMsg, TopLevelFlag(..), DeprEntity(..))
+import OccName          ( entitySpecified )
 import SrcLoc
 import Outputable
 import Util
@@ -1242,12 +1243,20 @@ warnIfDeprecated gre@(GRE { gre_name = name, gre_imp = iss })
                    -- See Note [Handling of deprecations]
          do { iface <- loadInterfaceForName doc name
             ; case lookupImpDeprec iface gre of
-                Just txt -> addWarn (Reason Opt_WarnWarningsDeprecations)
-                                   (mk_msg imp_spec txt)
+                Just txt -> do
+                  -- control what sort of entity is deprecated (Trac #3427)
+                  when (entitySpecified (deprEntityFromWarn txt)
+                                        (occNameSpace occ))
+                       $ addWarn (Reason Opt_WarnWarningsDeprecations)
+                                 (mk_msg imp_spec txt)
                 Nothing  -> return () } }
   | otherwise
   = return ()
   where
+    deprEntityFromWarn :: WarningTxt -> DeprEntity
+    deprEntityFromWarn (DeprecatedTxt _ _ de) = de
+    deprEntityFromWarn _ = DeprUnqual
+
     occ = greOccName gre
     name_mod = ASSERT2( isExternalName name, ppr name ) nameModule name
     doc = text "The name" <+> quotes (ppr occ) <+> ptext (sLit "is mentioned explicitly")

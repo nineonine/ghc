@@ -104,7 +104,9 @@ module BasicTypes(
 
         IntWithInf, infinity, treatZeroAsInf, mkIntWithInf, intGtLimit,
 
-        SpliceExplicitFlag(..)
+        SpliceExplicitFlag(..),
+
+        DeprEntity(..)
    ) where
 
 import GhcPrelude
@@ -329,6 +331,7 @@ data WarningTxt = WarningTxt (Located SourceText)
                              [Located StringLiteral]
                 | DeprecatedTxt (Located SourceText)
                                 [Located StringLiteral]
+                                DeprEntity
     deriving (Eq, Data)
 
 instance Outputable WarningTxt where
@@ -337,7 +340,7 @@ instance Outputable WarningTxt where
           NoSourceText   -> pp_ws ws
           SourceText src -> text src <+> pp_ws ws <+> text "#-}"
 
-    ppr (DeprecatedTxt lsrc  ds)
+    ppr (DeprecatedTxt lsrc  ds _)
       = case unLoc lsrc of
           NoSourceText   -> pp_ws ds
           SourceText src -> text src <+> pp_ws ds <+> text "#-}"
@@ -353,7 +356,7 @@ pp_ws ws
 pprWarningTxtForMsg :: WarningTxt -> SDoc
 pprWarningTxtForMsg (WarningTxt    _ ws)
                      = doubleQuotes (vcat (map (ftext . sl_fs . unLoc) ws))
-pprWarningTxtForMsg (DeprecatedTxt _ ds)
+pprWarningTxtForMsg (DeprecatedTxt _ ds _)
                      = text "Deprecated:" <+>
                        doubleQuotes (vcat (map (ftext . sl_fs . unLoc) ds))
 
@@ -1583,3 +1586,10 @@ data SpliceExplicitFlag
           = ExplicitSplice | -- ^ <=> $(f x y)
             ImplicitSplice   -- ^ <=> f x y,  i.e. a naked top level expression
     deriving Data
+
+-- | A type to control what sort of entity a deprecated pragma applies to
+data DeprEntity
+  = DeprTy      -- ^ {-# DEPRECATED type Foo "..." #-}
+  | DeprCon     -- ^ {-# DEPRECATED constructor Foo "..." #-}
+  | DeprUnqual  -- ^ {-# DEPRECATED Foo "..." #-}
+  deriving( Eq, Data, Show )

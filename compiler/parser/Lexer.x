@@ -591,6 +591,7 @@ data Token
   = ITas                        -- Haskell keywords
   | ITcase
   | ITclass
+  | ITconstructor
   | ITdata
   | ITdefault
   | ITderiving
@@ -803,6 +804,7 @@ reservedWordsFM = listToUFM $
          ( "as",             ITas,            0 ),
          ( "case",           ITcase,          0 ),
          ( "class",          ITclass,         0 ),
+         ( "constructor",    ITconstructor,   0 ),
          ( "data",           ITdata,          0 ),
          ( "default",        ITdefault,       0 ),
          ( "deriving",       ITderiving,      0 ),

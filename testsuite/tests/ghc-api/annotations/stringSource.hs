@@ -57,8 +57,8 @@ testOneFile libdir fileName = do
                               ) ast
 
      doWarningTxt :: WarningTxt -> [(String,[Located (SourceText,FastString)])]
-     doWarningTxt ((WarningTxt _ ss))    = [("w",map conv ss)]
-     doWarningTxt ((DeprecatedTxt _ ss)) = [("d",map conv ss)]
+     doWarningTxt ((WarningTxt _ ss))      = [("w",map conv ss)]
+     doWarningTxt ((DeprecatedTxt _ ss _)) = [("d",map conv ss)]
 
      doImportDecl :: ImportDecl GhcPs
                   -> [(String,[Located (SourceText,FastString)])]

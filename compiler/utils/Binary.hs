@@ -1090,10 +1090,11 @@ instance Binary WarningTxt where
             putByte bh 0
             put_ bh s
             put_ bh w
-    put_ bh (DeprecatedTxt s d) = do
+    put_ bh (DeprecatedTxt s d e) = do
             putByte bh 1
             put_ bh s
             put_ bh d
+            put_ bh e
 
     get bh = do
             h <- getByte bh
@@ -1103,7 +1104,8 @@ instance Binary WarningTxt where
                       return (WarningTxt s w)
               _ -> do s <- get bh
                       d <- get bh
-                      return (DeprecatedTxt s d)
+                      e <- get bh
+                      return (DeprecatedTxt s d e)
 
 instance Binary StringLiteral where
   put_ bh (StringLiteral st fs) = do
@@ -1173,3 +1175,17 @@ instance Binary SourceText where
         s <- get bh
         return (SourceText s)
       _ -> panic $ "Binary SourceText:" ++ show h
+
+
+instance Binary DeprEntity where
+    put_ bh DeprTy     = putByte bh 0
+    put_ bh DeprCon    = putByte bh 1
+    put_ bh DeprUnqual = putByte bh 2
+
+    get bh = do
+      h <- getByte bh
+      case h of
+        0 -> return DeprTy
+        1 -> return DeprCon
+        2 -> return DeprUnqual
+        _ -> panic $ "Binary DeprEntity:" ++ show h

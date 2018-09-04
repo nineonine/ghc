@@ -1,0 +1,16 @@
+
+T3427.hs:5:8: warning: [-Wdeprecations (in -Wdefault)]
+    In the use of type constructor or class ‘Foo’ (imported from A):
+    Deprecated: "Don't use type and data constructor Foo"
+
+T3427.hs:6:7: warning: [-Wdeprecations (in -Wdefault)]
+    In the use of data constructor ‘Foo’ (imported from A):
+    Deprecated: "Don't use type and data constructor Foo"
+
+T3427.hs:8:8: warning: [-Wdeprecations (in -Wdefault)]
+    In the use of type constructor or class ‘Bar’ (imported from A):
+    Deprecated: "Don't use type Bar"
+
+T3427.hs:12:7: warning: [-Wdeprecations (in -Wdefault)]
+    In the use of data constructor ‘Baz’ (imported from A):
+    Deprecated: "Don't use data constructor Baz"

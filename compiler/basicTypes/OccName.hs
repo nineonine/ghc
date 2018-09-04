@@ -51,6 +51,7 @@ module OccName (
         mkDFunOcc,
         setOccNameSpace,
         demoteOccName,
+        entitySpecified,
         HasOccName(..),
 
         -- ** Derived 'OccName's
@@ -102,6 +103,7 @@ module OccName (
 
 import GhcPrelude
 
+import BasicTypes (DeprEntity(..))
 import Util
 import Unique
 import DynFlags
@@ -356,7 +358,13 @@ otherNameSpace DataName = VarName
 otherNameSpace TvName = TcClsName
 otherNameSpace TcClsName = TvName
 
-
+-- check if deprecated pragma applies to specified entity
+entitySpecified :: DeprEntity -> NameSpace -> Bool
+entitySpecified DeprTy TcClsName = True
+entitySpecified DeprCon DataName = True
+entitySpecified _ VarName        = True
+entitySpecified DeprUnqual _     = True
+entitySpecified _ _              = False
 
 {- | Other names in the compiler add additional information to an OccName.
 This class provides a consistent way to access the underlying OccName. -}
