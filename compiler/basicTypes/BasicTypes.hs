@@ -1590,6 +1590,6 @@ data SpliceExplicitFlag
 -- | A type to control what sort of entity a deprecated pragma applies to
 data DeprEntity
   = DeprTy      -- ^ {-# DEPRECATED type Foo "..." #-}
-  | DeprCon     -- ^ {-# DEPRECATED constructor Foo "..." #-}
+  | DeprCon     -- ^ {-# DEPRECATED data Foo "..." #-}
   | DeprUnqual  -- ^ {-# DEPRECATED Foo "..." #-}
   deriving( Eq, Data, Show )

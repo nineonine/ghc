@@ -7,4 +7,4 @@ data Bar = Bar
 {-# DEPRECATED type Bar "Don't use type Bar" #-}
 
 data Baz = Baz
-{-# DEPRECATED constructor Baz "Don't use data constructor Baz" #-}
+{-# DEPRECATED data Baz "Don't use data constructor Baz" #-}

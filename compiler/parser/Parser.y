@@ -436,7 +436,6 @@ are the most common patterns, rewritten as regular expressions for clarity:
  'as'           { L _ ITas }
  'case'         { L _ ITcase }
  'class'        { L _ ITclass }
- 'constructor'  { L _ ITconstructor }
  'data'         { L _ ITdata }
  'default'      { L _ ITdefault }
  'deriving'     { L _ ITderiving }
@@ -1673,13 +1672,11 @@ deprecation :: { OrdList (LWarnDecl GhcPs) }
         : maybe_deprEnt namelist strings
              {% amsu (sLL $1 $> $ (Warning noExt (unLoc $2) (DeprecatedTxt (noLoc NoSourceText) (snd $ unLoc $3) (unLoc $1))))
                      (fst $ unLoc $3) }
-             -- {% amsu (sLL $1 $> $ (Warning noExt (unLoc $1) (DeprecatedTxt (noLoc NoSourceText) $ snd $ unLoc $2)))
-             --         (fst $ unLoc $2) }
 
 maybe_deprEnt :: { Located DeprEntity }
-    : 'type'                    { sL1 $1 DeprTy  }
-    | 'constructor'             { sL1 $1 DeprCon }
-    | {- empty -}               { sL0 DeprUnqual }
+    : 'type'             { sL1 $1 DeprTy  }
+    | 'data'             { sL1 $1 DeprCon }
+    | {- empty -}        { sL0 DeprUnqual }
 
 strings :: { Located ([AddAnn],[Located StringLiteral]) }
     : STRING { sL1 $1 ([],[L (gl $1) (getStringLiteral $1)]) }
