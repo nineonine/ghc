@@ -362,7 +362,7 @@ otherNameSpace TcClsName = TvName
 entitySpecified :: DeprEntity -> NameSpace -> Bool
 entitySpecified DeprTy TcClsName = True
 entitySpecified DeprCon DataName = True
-entitySpecified _ VarName        = True
+-- entitySpecified _ VarName        = True
 entitySpecified DeprUnqual _     = True
 entitySpecified _ _              = False
 
