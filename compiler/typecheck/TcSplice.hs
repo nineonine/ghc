@@ -215,7 +215,7 @@ tcBrackTy (XBracket {}) = panic "tcUntypedBracket: Unexpected XBracket"
 tcPendingSplice :: PendingRnSplice -> TcM PendingTcSplice
 tcPendingSplice (PendingRnSplice flavour splice_name expr)
   = do { res_ty <- tcMetaTy meta_ty_name
-       ; expr' <- tcMonoExpr expr (mkCheckExpType res_ty)
+       ; expr' <- tcMonoExpr expr (mkCheckExpType res_ty $ text "tcPendingSplice")
        ; return (PendingTcSplice splice_name expr') }
   where
      meta_ty_name = case flavour of
@@ -473,7 +473,7 @@ tcNestedSplice pop_stage (TcPending ps_var lie_var) splice_name expr res_ty
        ; meta_exp_ty <- tcTExpTy res_ty
        ; expr' <- setStage pop_stage $
                   setConstraintVar lie_var $
-                  tcMonoExpr expr (mkCheckExpType meta_exp_ty)
+                  tcMonoExpr expr (mkCheckExpType meta_exp_ty $ text "tcNestedSplice")
        ; untypeq <- tcLookupId unTypeQName
        ; let expr'' = mkHsApp (nlHsTyApp untypeq [res_ty]) expr'
        ; ps <- readMutVar ps_var
@@ -492,7 +492,7 @@ tcTopSplice expr res_ty
          res_ty <- expTypeToType res_ty
        ; meta_exp_ty <- tcTExpTy res_ty
        ; zonked_q_expr <- tcTopSpliceExpr Typed $
-                          tcMonoExpr expr (mkCheckExpType meta_exp_ty)
+                          tcMonoExpr expr (mkCheckExpType meta_exp_ty $ text "tcTopSplice1")
 
          -- See Note [Collecting modFinalizers in typed splices].
        ; modfinalizers_ref <- newTcRef []
@@ -511,7 +511,7 @@ tcTopSplice expr res_ty
          -- These steps should never fail; this is a *typed* splice
        ; addErrCtxt (spliceResultDoc expr) $ do
        { (exp3, _fvs) <- rnLExpr expr2
-       ; exp4 <- tcMonoExpr exp3 (mkCheckExpType res_ty)
+       ; exp4 <- tcMonoExpr exp3 (mkCheckExpType res_ty $ text "tcTopSplice2")
        ; return (unLoc exp4) } }
 
 {-

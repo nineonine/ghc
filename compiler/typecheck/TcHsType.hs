@@ -1026,7 +1026,8 @@ checkExpectedKindX pp_hs_ty ty act_kind exp_kind
       ; let origin = TypeEqOrigin { uo_actual   = act_kind'
                                   , uo_expected = exp_kind
                                   , uo_thing    = Just pp_hs_ty
-                                  , uo_visible  = True } -- the hs_ty is visible
+                                  , uo_visible  = True -- the hs_ty is visible
+                                  , uo_context  = Just $ text "TcHsType.checkExpectedKindX #9173" <+> ppr ty} -- text "TcHsType.checkExpectedKindX #9173"
             ty' = mkNakedAppTys ty new_args
 
       ; traceTc "checkExpectedKind" $
