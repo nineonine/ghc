@@ -1649,7 +1649,7 @@ tcExprSig expr (CompleteSig { sig_bndr = poly_id, sig_loc = loc })
              skol_tvs  = map snd tv_prs
        ; (ev_binds, expr') <- checkConstraints skol_info skol_tvs given $
                               tcExtendNameTyVarEnv tv_prs $
-                              tcPolyExprNC expr tau (text "TODO")
+                              tcPolyExprNC expr tau (text "tcExprSig CompleteSig ")
 
        ; let poly_wrap = mkWpTyLams   skol_tvs
                          <.> mkWpLams given
@@ -1663,7 +1663,7 @@ tcExprSig expr sig@(PartialSig { psig_name = name, sig_loc = loc })
                 do { sig_inst <- tcInstSig sig
                    ; expr' <- tcExtendNameTyVarEnv (sig_inst_skols sig_inst) $
                               tcExtendNameTyVarEnv (sig_inst_wcs   sig_inst) $
-                              tcPolyExprNC expr (sig_inst_tau sig_inst) (text "TODO")
+                              tcPolyExprNC expr (sig_inst_tau sig_inst) (text "tcExprSig PartialSig")
                    ; return (expr', sig_inst) }
        -- See Note [Partial expression signatures]
        ; let tau = sig_inst_tau sig_inst

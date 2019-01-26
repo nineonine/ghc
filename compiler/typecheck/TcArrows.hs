@@ -89,7 +89,7 @@ tcProc pat cmd exp_ty
         ; (co, (exp_ty1, res_ty)) <- matchExpectedAppTy exp_ty
         ; (co1, (arr_ty, arg_ty)) <- matchExpectedAppTy exp_ty1
         ; let cmd_env = CmdEnv { cmd_arr = arr_ty }
-        ; (pat', cmd') <- tcPat ProcExpr pat (mkCheckExpType arg_ty $ text "TcArrows.tcProc #9173") $
+        ; (pat', cmd') <- tcPat ProcExpr pat (mkCheckExpType arg_ty $ text "TcArrows.tcProc") $
                           tcCmdTop cmd_env cmd (unitTy, res_ty)
         ; let res_co = mkTcTransCo co
                          (mkTcAppCo co1 (mkTcNomReflCo res_ty))
@@ -159,7 +159,7 @@ tc_cmd env in_cmd@(HsCmdCase x scrut matches) (stk, res_ty)
                               ; tcCmd env body (stk, res_ty') }
 
 tc_cmd env (HsCmdIf x Nothing pred b1 b2) res_ty    -- Ordinary 'if'
-  = do  { pred' <- tcMonoExpr pred (mkCheckExpType boolTy $ text "tc_cmd: ordinary if")
+  = do  { pred' <- tcMonoExpr pred (mkCheckExpType boolTy $ text "required as the condition of an `if`")
         ; b1'   <- tcCmd env b1 res_ty
         ; b2'   <- tcCmd env b2 res_ty
         ; return (HsCmdIf x Nothing pred' b1' b2')
@@ -205,9 +205,9 @@ tc_cmd env cmd@(HsCmdArrApp _ fun arg ho_app lr) (_, res_ty)
   = addErrCtxt (cmdCtxt cmd)    $
     do  { arg_ty <- newOpenFlexiTyVarTy
         ; let fun_ty = mkCmdArrTy env arg_ty res_ty
-        ; fun' <- select_arrow_scope (tcMonoExpr fun (mkCheckExpType fun_ty $ text "tc_cmd: arrow application for fun"))
+        ; fun' <- select_arrow_scope (tcMonoExpr fun (mkCheckExpType fun_ty $ text "tc_cmd.HsCmdArrApp: arrow application for fun"))
 
-        ; arg' <- tcMonoExpr arg (mkCheckExpType arg_ty $ text "tc_cmd: arrow application for arg")
+        ; arg' <- tcMonoExpr arg (mkCheckExpType arg_ty $ text "tc_cmd.HsCmdArrApp: arrow application for arg")
 
         ; return (HsCmdArrApp fun_ty fun' arg' ho_app lr) }
   where
@@ -232,7 +232,7 @@ tc_cmd env cmd@(HsCmdApp x fun arg) (cmd_stk, res_ty)
   = addErrCtxt (cmdCtxt cmd)    $
     do  { arg_ty <- newOpenFlexiTyVarTy
         ; fun'   <- tcCmd env fun (mkPairTy arg_ty cmd_stk, res_ty)
-        ; arg'   <- tcMonoExpr arg (mkCheckExpType arg_ty $ text "command application")
+        ; arg'   <- tcMonoExpr arg (mkCheckExpType arg_ty $ text "tc_cmd.HsCmdApp")
         ; return (HsCmdApp x fun' arg') }
 
 -------------------------------------------
@@ -252,8 +252,8 @@ tc_cmd env
 
                 -- Check the patterns, and the GRHSs inside
         ; (pats', grhss') <- setSrcSpan mtch_loc                              $
-                             tcPats LambdaExpr pats (map (flip mkCheckExpType $ text "lambda expression") arg_tys) $
-                             tc_grhss grhss cmd_stk' (mkCheckExpType res_ty   $ text "tc_cmd: arrow application")
+                             tcPats LambdaExpr pats (map (flip mkCheckExpType $ text "tc_cmd.HsCmdLam.pattern") arg_tys) $
+                             tc_grhss grhss cmd_stk' (mkCheckExpType res_ty   $ text "tc_cmd.HsCmdLam.GRHSs")
 
         ; let match' = L mtch_loc (Match { m_ext = noExt
                                          , m_ctxt = LambdaExpr, m_pats = pats'
@@ -370,7 +370,7 @@ tcArrDoStmt env _ (BodyStmt _ rhs _ _) res_ty thing_inside
 
 tcArrDoStmt env ctxt (BindStmt _ pat rhs _ _) res_ty thing_inside
   = do  { (rhs', pat_ty) <- tc_arr_rhs env rhs
-        ; (pat', thing)  <- tcPat (StmtCtxt ctxt) pat (mkCheckExpType pat_ty $ text "bind statement") $
+        ; (pat', thing)  <- tcPat (StmtCtxt ctxt) pat (mkCheckExpType pat_ty $ text "tcArrDoStmt.BindStmt") $
                             thing_inside res_ty
         ; return (mkTcBindStmt pat' rhs', thing) }
 
@@ -383,7 +383,7 @@ tcArrDoStmt env ctxt (RecStmt { recS_stmts = stmts, recS_later_ids = later_names
         { (stmts', tup_rets)
                 <- tcStmtsAndThen ctxt (tcArrDoStmt env) stmts res_ty   $ \ _res_ty' ->
                         -- ToDo: res_ty not really right
-                   zipWithM tcCheckId tup_names (map (flip mkCheckExpType $ text "RecStmt") tup_elt_tys)
+                   zipWithM tcCheckId tup_names (map (flip mkCheckExpType $ text "tcArrDoStmt.RecStmt") tup_elt_tys)
 
         ; thing <- thing_inside res_ty
                 -- NB:  The rec_ids for the recursive things

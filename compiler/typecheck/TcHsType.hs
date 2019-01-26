@@ -1147,11 +1147,12 @@ checkExpectedKind sat hs_ty ty act exp
                                                    , ppr kind ])
                    ; return (tc_ty, kind) }
            _ -> return (ty, act)
-       ; (new_args, co_k) <- checkExpectedKindX hs_ty new_act exp
+       ; (new_args, co_k) <- checkExpectedKindX hs_ty ty new_act exp
        ; return (new_ty `mkNakedAppTys` new_args `mkNakedCastTy` co_k) }
 
 checkExpectedKindX :: HasDebugCallStack
                    => SDoc                 -- HsType whose kind we're checking
+                   -> TcType               -- ^ type we're checking
                    -> TcKind               -- the known kind of that type, k
                    -> TcKind               -- the expected kind, exp_kind
                    -> TcM ([TcType], TcCoercionN)
@@ -1161,35 +1162,33 @@ checkExpectedKindX :: HasDebugCallStack
 -- checks that the actual kind act_kind is compatible
 --      with the expected kind exp_kind
 checkExpectedKindX pp_hs_ty ty act_kind exp_kind
- = do { -- We need to make sure that both kinds have the same number of implicit
-        -- foralls out front. If the actual kind has more, instantiate accordingly.
-        -- Otherwise, just pass the type & kind through: the errors are caught
-        -- in unifyType.
-        let n_exp_invis_bndrs = invisibleTyBndrCount exp_kind
-            n_act_invis_bndrs = invisibleTyBndrCount act_kind
-            n_to_inst         = n_act_invis_bndrs - n_exp_invis_bndrs
-      ; (new_args, act_kind') <- tcInstTyBinders (splitPiTysInvisibleN n_to_inst act_kind)
+  = do { -- We need to make sure that both kinds have the same number of implicit
+         -- foralls out front. If the actual kind has more, instantiate accordingly.
+         -- Otherwise, just pass the type & kind through: the errors are caught
+         -- in unifyType.
+         let n_exp_invis_bndrs = invisibleTyBndrCount exp_kind
+             n_act_invis_bndrs = invisibleTyBndrCount act_kind
+             n_to_inst         = n_act_invis_bndrs - n_exp_invis_bndrs
+       ; (new_args, act_kind') <- tcInstTyBinders (splitPiTysInvisibleN n_to_inst act_kind)
 
-      ; let origin = TypeEqOrigin { uo_actual   = act_kind'
-                                  , uo_expected = exp_kind
-                                  , uo_thing    = Just pp_hs_ty
-                                  , uo_visible  = True -- the hs_ty is visible
-                                  , uo_context  = Just $ text "TcHsType.checkExpectedKindX #9173" <+> ppr ty} -- text "TcHsType.checkExpectedKindX #9173"
-            ty' = mkNakedAppTys ty new_args
+       ; let origin = TypeEqOrigin { uo_actual   = act_kind'
+                                   , uo_expected = exp_kind
+                                   , uo_thing    = Just pp_hs_ty
+                                   , uo_visible  = True -- the hs_ty is visible
+                                   , uo_context  = Just $ text "TcHsType.checkExpectedKindX: " <+> ppr ty}
 
-      ; traceTc "checkExpectedKind" $
-        vcat [ pp_hs_ty
-             , text "act_kind:" <+> ppr act_kind
-             , text "act_kind':" <+> ppr act_kind'
-             , text "exp_kind:" <+> ppr exp_kind ]
+       ; traceTc "checkExpectedKindX" $
+         vcat [ pp_hs_ty
+              , text "act_kind:" <+> ppr act_kind
+              , text "act_kind':" <+> ppr act_kind'
+              , text "exp_kind:" <+> ppr exp_kind ]
 
-      ; if act_kind' `tcEqType` exp_kind
-        then return ty'   -- This is very common
-        else do { co_k <- uType KindLevel origin act_kind' exp_kind
-                ; traceTc "checkExpectedKind" (vcat [ ppr act_kind
-                                                    , ppr exp_kind
-                                                    , ppr co_k ])
-                ; let result_ty = ty' `mkNakedCastTy` co_k
+       ; if act_kind' `tcEqType` exp_kind
+         then return (new_args, mkTcNomReflCo exp_kind)  -- This is very common
+         else do { co_k <- uType KindLevel origin act_kind' exp_kind
+                 ; traceTc "checkExpectedKind" (vcat [ ppr act_kind
+                                                     , ppr exp_kind
+                                                     , ppr co_k ])
                       -- See Note [The tcType invariant]
                 ; return (new_args, co_k) } }
 

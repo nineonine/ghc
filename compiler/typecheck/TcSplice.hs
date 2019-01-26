@@ -506,7 +506,6 @@ tcTopSplice expr res_ty
 runTopSplice :: DelayedSplice -> TcM (HsExpr GhcTc)
 runTopSplice (DelayedSplice lcl_env orig_expr res_ty q_expr)
   = setLclEnv lcl_env $ do {
-         zonked_ty <- zonkTcType res_ty
        ; zonked_q_expr <- zonkTopLExpr q_expr
         -- See Note [Collecting modFinalizers in typed splices].
        ; modfinalizers_ref <- newTcRef []
@@ -527,18 +526,8 @@ runTopSplice (DelayedSplice lcl_env orig_expr res_ty q_expr)
         -- These steps should never fail; this is a *typed* splice
        ; addErrCtxt (spliceResultDoc zonked_q_expr) $ do
          { (exp3, _fvs) <- rnLExpr expr2
-         ; unLoc <$> tcMonoExpr exp3 (mkCheckExpType zonked_ty)} }
-
-<<<<<<< HEAD
-         -- Rename and typecheck the spliced-in expression,
-         -- making sure it has type res_ty
-         -- These steps should never fail; this is a *typed* splice
-       ; addErrCtxt (spliceResultDoc expr) $ do
-       { (exp3, _fvs) <- rnLExpr expr2
-       ; exp4 <- tcMonoExpr exp3 (mkCheckExpType res_ty $ text "tcTopSplice2")
-       ; return (unLoc exp4) } }
-=======
->>>>>>> Run typed splices in the zonker
+         ; exp4 <- tcMonoExpr exp3 (mkCheckExpType res_ty $ text "tcTopSplice2")
+         ; return (unLoc exp4) } }
 
 {-
 ************************************************************************

@@ -980,10 +980,9 @@ mkErrorMsgFromCt ctxt ct report
 
 mkErrorReport :: ReportErrCtxt -> TcLclEnv -> Report -> TcM ErrMsg
 mkErrorReport ctxt tcl_env (Report important relevant_bindings valid_subs)
-         -- TODO: should we just remove this call to get context then?
-  = do { _context <- mkErrInfo (cec_tidy ctxt) (tcl_ctxt tcl_env)
+  = do { context <- mkErrInfo (cec_tidy ctxt) (tcl_ctxt tcl_env)
        ; mkErrDocAt (RealSrcSpan (tcl_loc tcl_env))
-            (errDoc important [] (relevant_bindings ++ valid_subs))
+            (errDoc important [context] (relevant_bindings ++ valid_subs))
        }
 
 type UserGiven = Implication
@@ -2034,37 +2033,40 @@ mkExpectedActualMsg ty1 ty2 (TypeEqOrigin { uo_actual = act
       KindLevel -> text "kind"
 
     msg1
-     -- | Just th <- maybe_thing, not (act `pickyEqType` exp)
-     | Just th <- maybe_thing
-     , Just uo_ctx <- maybe_ctx
-     =  vcat [ text "Actual" <> colon
-              <+> (quotes $ ppr act)
-              <+> (text "is the")
-              <+> sort
-              <+> (text "of")
-              <+> (quotes th)
-            , text "Expected" <>  colon
-              <+> (quotes $ ppr exp)
-              <+> (text "is the")
-              <+> sort
-              <+> uo_ctx
-            -- TODO: leave it or keep it?
-            , if printExpanded then expandedTys else empty ]
+      | Just th <- maybe_thing
+      , Just uo_ctx <- maybe_ctx
+      -- not (act `pickyEqType` exp) ??
+      = vcat [ text "Actual" <> colon
+               <+> (quotes $ ppr act)
+               <+> (text "is the")
+               <+> sort
+               <+> (text "of")
+               <+> (quotes th)
+             , text "Expected" <>  colon
+               <+> (quotes $ ppr exp)
+               <+> (text "is the")
+               <+> sort
+               <+> uo_ctx
+             -- TODO: leave it or keep it?
+             , if printExpanded then expandedTys else empty ]
 
-     -- TODO: do we want to leave this case? If yes, our `maybe_thing` is Nothing here
-     -- in this case our message is less informative. for example:
-        -- Type mismatch: ‘()’ /= ‘Bool’
-        -- Actual: Bool
-        -- Expected: ()
-        -- |
-        -- 29 |     True -> 1
-        -- |     ^^^^
+{-
+     TODO: do we want to leave this case? If yes, our `maybe_thing` is Nothing here
+     in this case our message is less informative. for example:
+        Type mismatch: ‘()’ /= ‘Bool’
+        Actual: Bool
+        Expected: ()
+        |
+        29 |     True -> 1
+        |     ^^^^
+-}
 
-     | not (act `pickyEqType` exp)
-     = vcat [ text "Actual"   <> colon <+> ppr act
-            , text "Expected" <> colon <+> ppr exp
-            , if printExpanded then expandedTys else empty ]
-     | otherwise = empty
+        -- maybe_thing and maybe_ctx is Nothing here
+      | not (act `pickyEqType` exp)
+      = vcat [ text "Actual"   <> colon <+> ppr act
+             , text "Expected" <> colon <+> ppr exp
+             , if printExpanded then expandedTys else empty ]
+      | otherwise = empty
 
     thing_msg = case maybe_thing of
                   Just thing -> \_ -> quotes thing <+> text "is"
